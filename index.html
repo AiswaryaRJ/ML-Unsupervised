@@ -100,7 +100,39 @@
   .cs-coord-chip{background:rgba(124,58,237,.12);border:1px solid var(--line);
     border-radius:6px;padding:4px 10px;font-family:monospace;font-size:12px;color:var(--violet-glow);
     transition:all .15s ease;}
-  .cs-coord-chip.highlight{background:rgba(242,184,75,.2);border-color:var(--amber);color:var(--amber);}</style>
+  .cs-coord-chip.highlight{background:rgba(242,184,75,.2);border-color:var(--amber);color:var(--amber);}  html, body{
+    margin:0; padding:0;
+    background:var(--bg-deep, #0a0714);
+  }
+  #cs-root{
+    max-width:720px;
+    margin:0 auto;
+  }
+  @media (max-width: 600px){
+    #cs-root{ border-radius:0; min-height:100vh; max-width:100%; }
+    .cs-header{ padding:14px 16px; }
+    .cs-logo{ font-size:13px; }
+    .cs-tag{ font-size:9px; letter-spacing:2px; }
+    .cs-panel{ padding:18px 14px; }
+    .cs-glow-title{ font-size:20px; }
+    .cs-hud{ gap:8px; }
+    .cs-hud-box{ min-width:0; flex:1; padding:8px 10px; }
+    .cs-hud-box .num{ font-size:18px; }
+    .cs-hud-box .lbl{ font-size:9px; }
+    .cs-card{ padding:14px; }
+    .cs-btn{ padding:11px 18px; font-size:12px; width:100%; }
+    .cs-choice-row{ gap:8px; }
+    .cs-btn.choice{ width:auto; flex:1; min-width:70px; padding:10px 12px; font-size:12px; }
+    .cs-round-label{ font-size:10px; }
+    table.cs-lb{ font-size:12px; }
+  }
+  @media (min-width: 601px){
+    #cs-root{ margin:24px auto; box-shadow:0 20px 60px rgba(0,0,0,.4), 0 0 60px rgba(124,58,237,.12) inset; }
+    .cs-panel{ padding:32px 36px; }
+    .cs-glow-title{ font-size:28px; }
+    .cs-btn{ min-width:180px; }
+  }
+</style>
 
 <div id="cs-root">
   <div class="cs-header">
