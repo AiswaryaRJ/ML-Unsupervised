@@ -119,7 +119,7 @@
 
   // ---------- Firebase backend (same setup as the merge game) ----------
   // Paste the SAME Database URL you used for the earlier game (or a new one).
-  const FIREBASE_DB_URL = "PASTE_YOUR_FIREBASE_DATABASE_URL_HERE";
+  const FIREBASE_DB_URL = "https://ml-sandbox-sprint-default-rtdb.asia-southeast1.firebasedatabase.app";
 
   async function submitScore(entry){
     const res = await fetch(FIREBASE_DB_URL + "/sprintScores.json", {
