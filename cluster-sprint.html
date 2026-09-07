@@ -1,0 +1,760 @@
+<style>
+  :root{
+    --bg-deep:#0a0714; --bg-mid:#150c28;
+    --violet:#7c3aed; --violet-glow:#a78bfa;
+    --amber:#f2b84b; --teal:#3fbfa0; --coral:#e8604c;
+    --ink:#e8e3f5; --dim:#8b81ab; --line:#3a2a5c;
+  }
+  *{box-sizing:border-box;}
+  #cs-root{
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    background:radial-gradient(circle at 50% 0%, var(--bg-mid) 0%, var(--bg-deep) 65%);
+    color:var(--ink); min-height:600px; border-radius:18px; position:relative;
+    overflow:hidden; border:1px solid var(--line);
+  }
+  #cs-root::before{
+    content:''; position:absolute;top:0;left:0;right:0;height:100%;
+    background-image:linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:40px 40px; opacity:.12; pointer-events:none;
+  }
+  .cs-header{display:flex;align-items:center;justify-content:space-between;
+    padding:16px 24px;border-bottom:1px solid var(--line);position:relative;z-index:2;}
+  .cs-logo{font-weight:800;letter-spacing:2px;font-size:15px;text-transform:uppercase;}
+  .cs-logo span{color:var(--violet-glow);}
+  .cs-tag{font-size:11px;color:var(--dim);letter-spacing:3px;text-transform:uppercase;}
+  .cs-panel{position:relative;z-index:2;padding:28px 24px;}
+  .cs-btn{
+    display:inline-block;background:linear-gradient(135deg,var(--violet) 0%,#4c1d95 100%);
+    color:#fff;border:1px solid var(--violet-glow);padding:12px 26px;font-weight:700;
+    letter-spacing:1.5px;text-transform:uppercase;font-size:13px;cursor:pointer;
+    clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px);
+    transition:all .15s ease;box-shadow:0 0 18px rgba(124,58,237,.45);
+  }
+  .cs-btn:hover{box-shadow:0 0 28px rgba(167,139,250,.75);transform:translateY(-1px);}
+  .cs-btn:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;}
+  .cs-btn.choice{background:rgba(255,255,255,.04);box-shadow:none;}
+  .cs-btn.choice.selected{background:linear-gradient(135deg,var(--violet) 0%,#4c1d95 100%);box-shadow:0 0 16px rgba(124,58,237,.5);}
+  .cs-btn.choice.correct{background:rgba(63,191,160,.25);border-color:var(--teal);}
+  .cs-btn.choice.wrong{background:rgba(232,96,76,.25);border-color:var(--coral);}
+  .cs-input{background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--ink);
+    padding:11px 14px;font-size:14px;border-radius:6px;outline:none;width:100%;}
+  .cs-input:focus{border-color:var(--violet-glow);}
+  .cs-glow-title{font-size:24px;font-weight:800;letter-spacing:1px;
+    background:linear-gradient(90deg,#fff,var(--violet-glow));
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  .cs-sub{color:var(--dim);font-size:13px;line-height:1.6;}
+  .cs-hud{display:flex;gap:16px;margin-bottom:18px;flex-wrap:wrap;}
+  .cs-hud-box{background:rgba(124,58,237,.1);border:1px solid var(--violet);
+    border-radius:8px;padding:10px 16px;text-align:center;min-width:100px;}
+  .cs-hud-box .num{font-size:22px;font-weight:800;color:var(--amber);font-family:monospace;}
+  .cs-hud-box .lbl{font-size:10px;letter-spacing:1.5px;color:var(--dim);text-transform:uppercase;margin-top:2px;}
+  .cs-card{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:10px;padding:20px;}
+  .cs-round-label{font-size:11px;letter-spacing:2px;color:var(--violet-glow);text-transform:uppercase;margin-bottom:6px;}
+  .cs-plot{background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px;width:100%;display:block;margin:14px 0;}
+  .cs-choice-row{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0;}
+  .cs-flex-between{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  table.cs-lb{width:100%;border-collapse:collapse;font-size:14px;}
+  table.cs-lb th{text-align:left;color:var(--dim);font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:8px 10px;border-bottom:1px solid var(--line);}
+  table.cs-lb td{padding:10px 10px;border-bottom:1px solid rgba(58,42,92,.4);}
+  table.cs-lb tr:first-child td{color:var(--amber);font-weight:800;}
+  .rank-badge{display:inline-block;width:22px;height:22px;border-radius:50%;
+    background:rgba(124,58,237,.25);text-align:center;line-height:22px;font-size:11px;font-weight:700;color:var(--violet-glow);}
+  .cs-mode-toggle{font-size:11px;color:var(--dim);cursor:pointer;text-decoration:underline;}
+  #cs-root{box-shadow:0 0 60px rgba(124,58,237,.12) inset;}
+  .cs-header{background:linear-gradient(90deg, rgba(124,58,237,.08), transparent 60%);}
+  .cs-card{box-shadow:0 4px 24px rgba(0,0,0,.25);}
+  .cs-btn.choice{transition:all .12s ease;}
+  .cs-btn.choice:hover{border-color:var(--violet-glow);}
+  .cs-progress-dots{display:flex;gap:6px;justify-content:center;}
+  .cs-progress-dots span{width:8px;height:8px;border-radius:50%;background:var(--line);transition:all .2s;}
+  .cs-progress-dots span.active{background:var(--amber);box-shadow:0 0 8px var(--amber);}
+  .cs-progress-dots span.done{background:var(--teal);}
+  .cs-timebar-track{background:rgba(255,255,255,.06);border-radius:6px;height:6px;overflow:hidden;margin-top:8px;}
+  .cs-timebar-fill{background:linear-gradient(90deg,var(--teal),var(--amber));height:100%;transition:width 1s linear;}
+  .cs-difficulty{display:inline-block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+    padding:3px 10px;border-radius:20px;font-weight:700;margin-left:8px;vertical-align:middle;}
+  .cs-difficulty.easy{background:rgba(63,191,160,.15);color:var(--teal);border:1px solid var(--teal);}
+  .cs-difficulty.medium{background:rgba(242,184,75,.15);color:var(--amber);border:1px solid var(--amber);}
+  .cs-difficulty.hard{background:rgba(232,96,76,.15);color:var(--coral);border:1px solid var(--coral);}
+  .cs-streak-badge{
+    display:inline-flex;align-items:center;gap:6px;background:rgba(242,184,75,.15);
+    border:1px solid var(--amber);color:var(--amber);font-weight:700;font-size:13px;
+    padding:8px 18px;border-radius:20px;margin:10px auto;animation:cs-streak-pop .4s ease;
+  }
+  @keyframes cs-streak-pop{0%{transform:scale(.7);opacity:0;}60%{transform:scale(1.08);}100%{transform:scale(1);opacity:1;}}
+  .cs-flash-overlay{
+    position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;
+    opacity:0;border-radius:18px;z-index:5;transition:opacity .15s ease;
+  }
+  .cs-flash-overlay.flash-correct{opacity:1;box-shadow:inset 0 0 90px rgba(63,191,160,.55);}
+  .cs-flash-overlay.flash-wrong{opacity:1;box-shadow:inset 0 0 90px rgba(232,96,76,.55);}
+  .cs-score-tick{transition:transform .25s ease;}
+  .cs-score-tick.bump{transform:scale(1.35);color:var(--teal)!important;}
+  .cs-radar-sweep{
+    position:absolute;top:0;left:0;height:100%;width:2px;background:linear-gradient(180deg,transparent,var(--violet-glow),transparent);
+    animation:cs-sweep 1.1s ease-out forwards;opacity:.8;
+  }
+  @keyframes cs-sweep{from{left:0;}to{left:100%;}}
+  .cs-canvas-wrap{position:relative;overflow:hidden;border-radius:10px;}
+  .cs-coord-chip{background:rgba(124,58,237,.12);border:1px solid var(--line);
+    border-radius:6px;padding:4px 10px;font-family:monospace;font-size:12px;color:var(--violet-glow);
+    transition:all .15s ease;}
+  .cs-coord-chip.highlight{background:rgba(242,184,75,.2);border-color:var(--amber);color:var(--amber);}</style>
+
+<div id="cs-root">
+  <div class="cs-header">
+    <div><div class="cs-logo">CLUSTER <span>SPRINT</span></div><div class="cs-tag">Hierarchical + K-Means Finale</div></div>
+    <div class="cs-tag" id="cs-stage-label">FINAL ROUND</div>
+  </div>
+  <div class="cs-panel" id="cs-app"></div>
+  <div class="cs-flash-overlay" id="cs-flash"></div>
+</div>
+
+<script>
+(function(){
+  const root = document.getElementById('cs-app');
+  const stageLabel = document.getElementById('cs-stage-label');
+  let playerName = '';
+
+  // ---------- Firebase backend (same setup as the merge game) ----------
+  // Paste the SAME Database URL you used for the earlier game (or a new one).
+  const FIREBASE_DB_URL = "PASTE_YOUR_FIREBASE_DATABASE_URL_HERE";
+
+  async function submitScore(entry){
+    const res = await fetch(FIREBASE_DB_URL + "/sprintScores.json", {
+      method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(entry)
+    });
+    if (!res.ok) throw new Error("write failed");
+    return res.json();
+  }
+  async function fetchScores(){
+    const res = await fetch(FIREBASE_DB_URL + "/sprintScores.json");
+    if (!res.ok) throw new Error("read failed");
+    const data = await res.json();
+    return data ? Object.values(data) : [];
+  }
+
+  // ---------- Fixed question data (same for every student) ----------
+  const R1_POINTS = [ {l:'A',x:0,y:0}, {l:'B',x:3,y:4}, {l:'C',x:10,y:0}, {l:'D',x:10,y:8}, {l:'E',x:20,y:1} ];
+  const R1_PAIRS = [['A','B'],['A','C'],['B','C'],['C','D'],['B','D']];
+  const R1_CORRECT_PAIR = ['A','B'];
+  const R1_CORRECT_DIST = 5.00;
+
+  const R2_CENTERS = { C1:{x:0,y:0}, C2:{x:10,y:10} };
+  const R2_POINTS = [ {l:'P1',x:2,y:1}, {l:'P2',x:8,y:9}, {l:'P3',x:3,y:2}, {l:'P4',x:9,y:8} ];
+  const R2_CORRECT = { P1:'C1', P2:'C2', P3:'C1', P4:'C2' };
+
+  const R3_OPTIONS = ['K-Means','Hierarchical'];
+  const R3_CORRECT = 'K-Means';
+  const R3_REASONS = ['We already know the exact number of groups needed','We do not know how many groups exist yet'];
+  const R3_CORRECT_REASON = R3_REASONS[0];
+
+  function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+
+  function flashScreen(kind){
+    const fl = document.getElementById('cs-flash');
+    fl.className = 'cs-flash-overlay flash-' + kind;
+    setTimeout(()=>{ fl.className='cs-flash-overlay'; }, 500);
+  }
+
+  function render(){
+    root.innerHTML = '';
+    if (window.location.hash === '#host') { renderHostView(); return; }
+    if (!playerName) { renderNameEntry(); return; }
+    renderRace();
+  }
+
+  function renderNameEntry(){
+    root.innerHTML = `
+      <div style="max-width:440px;margin:20px auto;text-align:center;">
+        <div class="cs-glow-title">CLUSTER SPRINT</div>
+        <p class="cs-sub" style="margin:10px 0 22px;">
+          3 quick rounds. Real distances, real cluster assignments, real reasoning —
+          no code, just your understanding, under the clock.
+        </p>
+        <input class="cs-input" id="cs-name-input" placeholder="Enter your name" maxlength="20" style="margin-bottom:14px;">
+        <button class="cs-btn" id="cs-start-btn">START THE SPRINT</button>
+        <p style="margin-top:18px;font-size:11px;color:var(--dim);">
+          Hosting? <span class="cs-mode-toggle" id="cs-goto-host">Open leaderboard view</span>
+        </p>
+      </div>
+    `;
+    document.getElementById('cs-start-btn').onclick = () => {
+      const v = document.getElementById('cs-name-input').value.trim();
+      if (!v) return;
+      playerName = v; render();
+    };
+    document.getElementById('cs-name-input').addEventListener('keydown', e=>{
+      if (e.key==='Enter') document.getElementById('cs-start-btn').click();
+    });
+    document.getElementById('cs-goto-host').onclick = () => { window.location.hash='#host'; render(); };
+  }
+
+  // ---------- Race state ----------
+  let score, maxScore, timeLeft, timerHandle, startTs, currentRound, r1Answer, r2Answers, r3Answer, streak;
+
+  function renderRace(){
+    score = 0; maxScore = 14; timeLeft = 300; currentRound = 0; streak = 0;
+    r1Answer = {pair:null, dist:null, pair2:null, dist2:null};
+    r2Answers = {};
+    r3Answer = {algo:null, reason:null, algo2:null, reason2:null};
+
+    root.innerHTML = `
+      <div class="cs-flex-between" style="margin-bottom:14px;">
+        <div class="cs-glow-title" style="font-size:20px;">Hey ${escapeHtml(playerName)}!</div>
+        <div class="cs-sub">3 rounds, one continuous 5-minute clock.</div>
+      </div>
+      <div class="cs-hud">
+        <div class="cs-hud-box" style="flex:1;min-width:160px;">
+          <div class="num" id="cs-timer">5:00</div><div class="lbl">Time Left</div>
+          <div class="cs-timebar-track"><div class="cs-timebar-fill" id="cs-timebar" style="width:100%;"></div></div>
+        </div>
+        <div class="cs-hud-box"><div class="num cs-score-tick" id="cs-score">0</div><div class="lbl">Correct / ${maxScore}</div></div>
+        <div class="cs-hud-box">
+          <div class="cs-progress-dots" id="cs-round-dots">
+            <span></span><span></span><span></span>
+          </div>
+          <div class="lbl" style="margin-top:8px;">Round</div>
+        </div>
+      </div>
+      <div id="cs-round-area"></div>
+      <div style="margin-top:16px;text-align:center;" id="cs-controls">
+        <button class="cs-btn" id="cs-go-btn">START — 3, 2, 1...</button>
+      </div>
+      <div id="cs-result" style="margin-top:18px;"></div>
+    `;
+
+    document.getElementById('cs-go-btn').onclick = startCountdown;
+
+    function startCountdown(){
+      const btn = document.getElementById('cs-go-btn');
+      let n=3; btn.disabled=true;
+      const iv = setInterval(()=>{
+        btn.textContent = n>0 ? n : 'GO!';
+        n--;
+        if (n<-1){ clearInterval(iv); document.getElementById('cs-controls').style.display='none'; beginRound(); }
+      },700);
+    }
+
+    function beginRound(){
+      startTs = Date.now();
+      timerHandle = setInterval(()=>{
+        timeLeft--; updateTimer();
+        if (timeLeft<=0){ clearInterval(timerHandle); finishSprint(); }
+      },1000);
+      showRound1();
+    }
+
+    function updateTimer(){
+      const m=Math.floor(timeLeft/60), s=timeLeft%60;
+      document.getElementById('cs-timer').textContent = m+':'+String(s).padStart(2,'0');
+      const pct = Math.max(0, (timeLeft/300)*100);
+      const bar = document.getElementById('cs-timebar');
+      if (bar) bar.style.width = pct+'%';
+    }
+    function updateScoreHud(){
+      const el = document.getElementById('cs-score');
+      el.textContent = score;
+      el.classList.remove('bump');
+      void el.offsetWidth; // restart animation
+      el.classList.add('bump');
+    }
+    function updateRoundHud(n){
+      const dots = document.querySelectorAll('#cs-round-dots span');
+      dots.forEach((d,i)=>{
+        d.classList.remove('active','done');
+        if (i < n-1) d.classList.add('done');
+        else if (i === n-1) d.classList.add('active');
+      });
+    }
+
+    function drawPointsCanvas(canvas, points, opts){
+      opts = opts || {};
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      const pad=44;
+      const xs=points.map(p=>p.x), ys=points.map(p=>p.y);
+      const minX=0, maxX=Math.max(...xs)+2, minY=0, maxY=Math.max(...ys)+2;
+      const sx = x => pad + (x-minX)/(maxX-minX||1) * (canvas.width-2*pad);
+      const sy = y => canvas.height-pad - (y-minY)/(maxY-minY||1) * (canvas.height-2*pad);
+
+      // gridlines + axis tick numbers
+      ctx.strokeStyle = 'rgba(167,139,250,.15)';
+      ctx.fillStyle = 'rgba(139,129,171,.9)';
+      ctx.font = '10px monospace';
+      const stepX = Math.max(1, Math.round(maxX/8));
+      const stepY = Math.max(1, Math.round(maxY/6));
+      for(let gx=0; gx<=maxX; gx+=stepX){
+        const px = sx(gx);
+        ctx.beginPath(); ctx.moveTo(px, pad-10); ctx.lineTo(px, canvas.height-pad); ctx.stroke();
+        ctx.fillText(gx, px-4, canvas.height-pad+16);
+      }
+      for(let gy=0; gy<=maxY; gy+=stepY){
+        const py = sy(gy);
+        ctx.beginPath(); ctx.moveTo(pad-10, py); ctx.lineTo(canvas.width-pad, py); ctx.stroke();
+        ctx.fillText(gy, pad-32, py+3);
+      }
+      // axis lines (solid)
+      ctx.strokeStyle = 'rgba(167,139,250,.5)'; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.moveTo(pad-10, canvas.height-pad); ctx.lineTo(canvas.width-pad, canvas.height-pad); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(pad-10, pad-10); ctx.lineTo(pad-10, canvas.height-pad); ctx.stroke();
+      ctx.fillStyle = 'rgba(139,129,171,.9)'; ctx.font='10px monospace';
+      ctx.fillText('x', canvas.width-pad+4, canvas.height-pad+4);
+      ctx.fillText('y', pad-30, pad-14);
+
+      points.forEach(p=>{
+        const px=sx(p.x), py=sy(p.y);
+        ctx.beginPath(); ctx.arc(px,py, p.big?12:8, 0, Math.PI*2);
+        ctx.fillStyle = p.color || '#a78bfa';
+        ctx.shadowColor = p.color || '#a78bfa'; ctx.shadowBlur = p.big?16:6;
+        ctx.fill(); ctx.shadowBlur=0;
+        ctx.strokeStyle='rgba(255,255,255,.6)'; ctx.lineWidth=1.5; ctx.stroke();
+        ctx.fillStyle='#fff'; ctx.font='bold 12px monospace';
+        ctx.fillText(p.l, px+13, py-10);
+      });
+    }
+
+    function coordList(points, idPrefix){
+      return `<div style="display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 4px;">` +
+        points.map(p=>`<span class="cs-coord-chip" ${idPrefix?`id="${idPrefix}-${p.l.replace(/[^a-zA-Z0-9]/g,'')}"`:''}>
+          ${p.l} (${p.x}, ${p.y})</span>`).join('') + `</div>`;
+    }
+
+    function addRadarSweep(wrapEl){
+      const sweep = document.createElement('div');
+      sweep.className = 'cs-radar-sweep';
+      wrapEl.appendChild(sweep);
+      setTimeout(()=>{ sweep.remove(); }, 1200);
+    }
+
+    // ---------- Round 1 ----------
+    const R1B_POINTS = [ {l:'AB',x:1.5,y:2}, {l:'C',x:10,y:0}, {l:'D',x:10,y:8}, {l:'E',x:20,y:1} ];
+    const R1B_PAIRS = [['AB','C'],['AB','D'],['AB','E'],['C','D'],['D','E']];
+    const R1B_CORRECT_PAIR = ['C','D'];
+    const R1B_CORRECT_DIST = 8.00;
+
+    function showRound1(){
+      currentRound=1; updateRoundHud(1);
+      const area = document.getElementById('cs-round-area');
+      area.innerHTML = `
+        <div class="cs-card">
+          <div class="cs-round-label">🔗 Round 1 · Hierarchical <span class="cs-difficulty easy">Easy</span></div>
+          <div class="cs-glow-title" style="font-size:18px;">Step 1 — which pair is closest, and how far apart?</div>
+          <div class="cs-canvas-wrap"><canvas id="cs-r1-canvas" class="cs-plot" width="440" height="240"></canvas></div>
+          <div id="cs-r1-coords"></div>
+          <p class="cs-sub">Pick the closest pair:</p>
+          <div class="cs-choice-row" id="cs-r1-pairs"></div>
+          <p class="cs-sub">Now type the distance between them (2 decimal places):</p>
+          <input class="cs-input" id="cs-r1-dist" placeholder="type the distance" style="max-width:180px;margin-bottom:14px;">
+          <div><button class="cs-btn" id="cs-r1-submit">SUBMIT</button></div>
+        </div>
+      `;
+      const wrap = area.querySelector('.cs-canvas-wrap');
+      drawPointsCanvas(document.getElementById('cs-r1-canvas'), R1_POINTS);
+      addRadarSweep(wrap);
+      document.getElementById('cs-r1-coords').innerHTML = coordList(R1_POINTS, 'r1c');
+      const pairArea = document.getElementById('cs-r1-pairs');
+      R1_PAIRS.forEach(pair=>{
+        const b = document.createElement('button');
+        b.className='cs-btn choice'; b.textContent = pair.join('-');
+        b.onclick = ()=>{
+          [...pairArea.children].forEach(c=>c.classList.remove('selected'));
+          b.classList.add('selected');
+          r1Answer.pair = pair;
+          // highlight the two matching coordinate chips
+          document.querySelectorAll('#cs-r1-coords .cs-coord-chip').forEach(c=>c.classList.remove('highlight'));
+          pair.forEach(l=>{
+            const chip = document.getElementById('r1c-'+l.replace(/[^a-zA-Z0-9]/g,''));
+            if (chip) chip.classList.add('highlight');
+          });
+        };
+        pairArea.appendChild(b);
+      });
+      document.getElementById('cs-r1-submit').onclick = ()=>{
+        r1Answer.dist = parseFloat(document.getElementById('cs-r1-dist').value);
+        const pairOk = r1Answer.pair && r1Answer.pair[0]===R1_CORRECT_PAIR[0] && r1Answer.pair[1]===R1_CORRECT_PAIR[1];
+        const distOk = !isNaN(r1Answer.dist) && Math.abs(r1Answer.dist - R1_CORRECT_DIST) <= 0.2;
+        if (pairOk) score++; if (distOk) score++;
+        updateScoreHud();
+        flashScreen(pairOk && distOk ? 'correct' : 'wrong');
+        [...pairArea.children].forEach(b=>{
+          const isCorrectBtn = b.textContent === R1_CORRECT_PAIR.join('-');
+          if (isCorrectBtn) b.classList.add('correct');
+          else if (b.classList.contains('selected')) b.classList.add('wrong');
+        });
+        const distInput = document.getElementById('cs-r1-dist');
+        distInput.style.borderColor = distOk ? 'var(--teal)' : 'var(--coral)';
+        document.getElementById('cs-r1-submit').disabled = true;
+        setTimeout(showRound1Step2, 900);
+      };
+    }
+
+    function showRound1Step2(){
+      const area = document.getElementById('cs-round-area');
+      area.innerHTML = `
+        <div class="cs-card">
+          <div class="cs-round-label">🔗 Round 1 · Hierarchical <span class="cs-difficulty easy">Easy</span></div>
+          <div class="cs-glow-title" style="font-size:18px;">Step 2 — A and B just merged. What merges next?</div>
+          <p class="cs-sub">The merged pair now behaves as one cluster, "AB", sitting at their midpoint.</p>
+          <div class="cs-canvas-wrap"><canvas id="cs-r1b-canvas" class="cs-plot" width="440" height="240"></canvas></div>
+          <div id="cs-r1b-coords"></div>
+          <p class="cs-sub">Pick the closest pair now:</p>
+          <div class="cs-choice-row" id="cs-r1b-pairs"></div>
+          <p class="cs-sub">Distance between them:</p>
+          <input class="cs-input" id="cs-r1b-dist" placeholder="type the distance" style="max-width:180px;margin-bottom:14px;">
+          <div><button class="cs-btn" id="cs-r1b-submit">SUBMIT</button></div>
+        </div>
+      `;
+      const wrap = area.querySelector('.cs-canvas-wrap');
+      const plotPts = [ {...R1B_POINTS[0], color:'#f2b84b', big:true}, ...R1B_POINTS.slice(1).map(p=>({...p, color:'#a78bfa'})) ];
+      drawPointsCanvas(document.getElementById('cs-r1b-canvas'), plotPts);
+      addRadarSweep(wrap);
+      document.getElementById('cs-r1b-coords').innerHTML = coordList(R1B_POINTS, 'r1bc');
+      const pairArea = document.getElementById('cs-r1b-pairs');
+      R1B_PAIRS.forEach(pair=>{
+        const b = document.createElement('button');
+        b.className='cs-btn choice'; b.textContent = pair.join('-');
+        b.onclick = ()=>{
+          [...pairArea.children].forEach(c=>c.classList.remove('selected'));
+          b.classList.add('selected');
+          r1Answer.pair2 = pair;
+          document.querySelectorAll('#cs-r1b-coords .cs-coord-chip').forEach(c=>c.classList.remove('highlight'));
+          pair.forEach(l=>{
+            const chip = document.getElementById('r1bc-'+l.replace(/[^a-zA-Z0-9]/g,''));
+            if (chip) chip.classList.add('highlight');
+          });
+        };
+        pairArea.appendChild(b);
+      });
+      document.getElementById('cs-r1b-submit').onclick = ()=>{
+        r1Answer.dist2 = parseFloat(document.getElementById('cs-r1b-dist').value);
+        const pairOk = r1Answer.pair2 && r1Answer.pair2[0]===R1B_CORRECT_PAIR[0] && r1Answer.pair2[1]===R1B_CORRECT_PAIR[1];
+        const distOk = !isNaN(r1Answer.dist2) && Math.abs(r1Answer.dist2 - R1B_CORRECT_DIST) <= 0.2;
+        if (pairOk) score++; if (distOk) score++;
+        updateScoreHud();
+        flashScreen(pairOk && distOk ? 'correct' : 'wrong');
+        const round1FullyCorrect = pairOk && distOk &&
+          r1Answer.pair && r1Answer.pair[0]===R1_CORRECT_PAIR[0] && r1Answer.pair[1]===R1_CORRECT_PAIR[1] &&
+          !isNaN(r1Answer.dist) && Math.abs(r1Answer.dist - R1_CORRECT_DIST) <= 0.2;
+        [...pairArea.children].forEach(b=>{
+          const isCorrectBtn = b.textContent === R1B_CORRECT_PAIR.join('-');
+          if (isCorrectBtn) b.classList.add('correct');
+          else if (b.classList.contains('selected')) b.classList.add('wrong');
+        });
+        const distInput = document.getElementById('cs-r1b-dist');
+        distInput.style.borderColor = distOk ? 'var(--teal)' : 'var(--coral)';
+        document.getElementById('cs-r1b-submit').disabled = true;
+        if (round1FullyCorrect) streak++;
+        setTimeout(()=> maybeShowStreak(showRound2), 900);
+      };
+    }
+
+    function maybeShowStreak(nextFn){
+      if (streak >= 1){
+        const area = document.getElementById('cs-round-area');
+        area.innerHTML = `<div style="text-align:center;">
+          <div class="cs-streak-badge">🔥 ${streak} round${streak>1?'s':''} perfect streak!</div>
+        </div>`;
+        setTimeout(nextFn, 1100);
+      } else {
+        nextFn();
+      }
+    }
+
+    // ---------- Round 2 ----------
+    const R2_TWIST = {l:'P5', x:5.5, y:4.2};
+    const R2_TWIST_CORRECT = 'C1';
+
+    function showRound2(){
+      currentRound=2; updateRoundHud(2);
+      const area = document.getElementById('cs-round-area');
+      const allPointsForPlot = [...R2_POINTS, R2_TWIST];
+      const allPts = [
+        {l:'C1', x:R2_CENTERS.C1.x, y:R2_CENTERS.C1.y, color:'#f2b84b', big:true},
+        {l:'C2', x:R2_CENTERS.C2.x, y:R2_CENTERS.C2.y, color:'#3fbfa0', big:true},
+        ...allPointsForPlot.map(p=>({...p, color:'#a78bfa'}))
+      ];
+      area.innerHTML = `
+        <div class="cs-card">
+          <div class="cs-round-label">🎯 Round 2 · K-Means <span class="cs-difficulty medium">Medium</span></div>
+          <div class="cs-glow-title" style="font-size:18px;">Assign each point to its nearest center</div>
+          <div class="cs-canvas-wrap"><canvas id="cs-r2-canvas" class="cs-plot" width="440" height="240"></canvas></div>
+          <div id="cs-r2-coords"></div>
+          <div id="cs-r2-list"></div>
+          <div style="margin-top:10px;"><button class="cs-btn" id="cs-r2-submit">SUBMIT ROUND 2</button></div>
+        </div>
+      `;
+      const wrap = area.querySelector('.cs-canvas-wrap');
+      drawPointsCanvas(document.getElementById('cs-r2-canvas'), allPts);
+      addRadarSweep(wrap);
+      document.getElementById('cs-r2-coords').innerHTML = coordList([
+        {l:'C1 (center)', x:R2_CENTERS.C1.x, y:R2_CENTERS.C1.y},
+        {l:'C2 (center)', x:R2_CENTERS.C2.x, y:R2_CENTERS.C2.y},
+        ...R2_POINTS, R2_TWIST
+      ]);
+      const list = document.getElementById('cs-r2-list');
+      allPointsForPlot.forEach(p=>{
+        const isTwist = p.l === R2_TWIST.l;
+        const row = document.createElement('div');
+        row.style.margin='10px 0';
+        row.innerHTML = `<span class="cs-sub" style="margin-right:10px;">${p.l}${isTwist?' <span style="color:var(--amber);">(tricky — worth 2)</span>':''}:</span>`;
+        ['C1','C2'].forEach(c=>{
+          const b = document.createElement('button');
+          b.className='cs-btn choice'; b.textContent=c; b.style.marginRight='8px';
+          b.onclick = ()=>{
+            [...row.querySelectorAll('button')].forEach(x=>x.classList.remove('selected'));
+            b.classList.add('selected');
+            r2Answers[p.l] = c;
+          };
+          row.appendChild(b);
+        });
+        list.appendChild(row);
+      });
+      document.getElementById('cs-r2-submit').onclick = ()=>{
+        let roundOk = true;
+        R2_POINTS.forEach(p=>{
+          if (r2Answers[p.l] === R2_CORRECT[p.l]) score++;
+          else roundOk = false;
+        });
+        if (r2Answers[R2_TWIST.l] === R2_TWIST_CORRECT) score += 2;
+        else roundOk = false;
+        updateScoreHud();
+        flashScreen(roundOk ? 'correct' : 'wrong');
+        [...list.children].forEach((row,i)=>{
+          const p = allPointsForPlot[i];
+          const correctAns = p.l===R2_TWIST.l ? R2_TWIST_CORRECT : R2_CORRECT[p.l];
+          [...row.querySelectorAll('button')].forEach(b=>{
+            if (b.textContent === correctAns) b.classList.add('correct');
+            else if (b.classList.contains('selected')) b.classList.add('wrong');
+          });
+        });
+        document.getElementById('cs-r2-submit').disabled = true;
+        animatePointsToCenters(allPointsForPlot, r2Answers, ()=>{
+          if (roundOk) streak++; else streak = 0;
+          maybeShowStreak(showRound3);
+        });
+      };
+    }
+
+    function animatePointsToCenters(points, answers, done){
+      const canvas = document.getElementById('cs-r2-canvas');
+      const ctx = canvas.getContext('2d');
+      const pad=44;
+      const allX = [R2_CENTERS.C1.x, R2_CENTERS.C2.x, ...points.map(p=>p.x)];
+      const allY = [R2_CENTERS.C1.y, R2_CENTERS.C2.y, ...points.map(p=>p.y)];
+      const maxX = Math.max(...allX)+2, maxY = Math.max(...allY)+2;
+      const sx = x => pad + x/maxX * (canvas.width-2*pad);
+      const sy = y => canvas.height-pad - y/maxY * (canvas.height-2*pad);
+      const frames = 24;
+      let f = 0;
+      const starts = points.map(p=>({x:sx(p.x), y:sy(p.y)}));
+      const centers = { C1:{x:sx(R2_CENTERS.C1.x), y:sy(R2_CENTERS.C1.y)}, C2:{x:sx(R2_CENTERS.C2.x), y:sy(R2_CENTERS.C2.y)} };
+      function step(){
+        f++;
+        const t = f/frames;
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.beginPath(); ctx.arc(centers.C1.x,centers.C1.y,12,0,Math.PI*2); ctx.fillStyle='#f2b84b';
+        ctx.shadowColor='#f2b84b'; ctx.shadowBlur=16; ctx.fill(); ctx.shadowBlur=0;
+        ctx.beginPath(); ctx.arc(centers.C2.x,centers.C2.y,12,0,Math.PI*2); ctx.fillStyle='#3fbfa0';
+        ctx.shadowColor='#3fbfa0'; ctx.shadowBlur=16; ctx.fill(); ctx.shadowBlur=0;
+        points.forEach((p,i)=>{
+          const target = centers[answers[p.l]] || centers.C1;
+          const cx = starts[i].x + (target.x-starts[i].x)*t;
+          const cy = starts[i].y + (target.y-starts[i].y)*t;
+          ctx.beginPath(); ctx.arc(cx,cy,8,0,Math.PI*2);
+          ctx.fillStyle = answers[p.l]==='C1' ? '#f2b84b' : '#3fbfa0';
+          ctx.fill();
+          ctx.strokeStyle='rgba(255,255,255,.6)'; ctx.lineWidth=1.5; ctx.stroke();
+        });
+        if (f < frames) requestAnimationFrame(step);
+        else setTimeout(done, 400);
+      }
+      requestAnimationFrame(step);
+    }
+
+    // ---------- Round 3 ----------
+    const R3B_SCENARIO = "You're exploring a brand-new dataset of unknown customer behavior, and you genuinely have no idea how many natural groups exist.";
+    const R3B_CORRECT = 'Hierarchical';
+    const R3B_REASONS = ['You do not need to decide the number of groups upfront — you can view the dendrogram and cut it later','You need results instantly on millions of rows'];
+    const R3B_CORRECT_REASON = R3B_REASONS[0];
+
+    function showRound3(){
+      currentRound=3; updateRoundHud(3);
+      const area = document.getElementById('cs-round-area');
+      area.innerHTML = `
+        <div class="cs-card">
+          <div class="cs-round-label">🧠 Round 3 · Judgment call <span class="cs-difficulty hard">Hard</span></div>
+          <div class="cs-glow-title" style="font-size:18px;">Scenario A — pick the right algorithm, and why</div>
+          <div style="background:rgba(124,58,237,.08);border:1px solid var(--line);border-left:3px solid var(--violet-glow);
+            border-radius:8px;padding:14px 16px;margin:14px 0;">
+            <p class="cs-sub" style="color:var(--ink);font-size:14px;margin:0;">
+              📋 "You're clustering thousands of customers, and you already know from business
+              needs that you want exactly <b style="color:var(--amber)">3 segments</b>."
+            </p>
+          </div>
+          <div class="cs-choice-row" id="cs-r3-algo"></div>
+          <p class="cs-sub" style="margin-top:12px;">Why?</p>
+          <div class="cs-choice-row" id="cs-r3-reason"></div>
+          <div style="margin-top:10px;"><button class="cs-btn" id="cs-r3-submit">NEXT SCENARIO</button></div>
+          <div id="cs-r3-reveal"></div>
+        </div>
+      `;
+      const algoArea = document.getElementById('cs-r3-algo');
+      R3_OPTIONS.forEach(opt=>{
+        const b=document.createElement('button');
+        b.className='cs-btn choice'; b.textContent=opt;
+        b.onclick=()=>{ [...algoArea.children].forEach(c=>c.classList.remove('selected')); b.classList.add('selected'); r3Answer.algo=opt; };
+        algoArea.appendChild(b);
+      });
+      const reasonArea = document.getElementById('cs-r3-reason');
+      R3_REASONS.forEach(opt=>{
+        const b=document.createElement('button');
+        b.className='cs-btn choice'; b.textContent=opt; b.style.fontSize='11px';
+        b.onclick=()=>{ [...reasonArea.children].forEach(c=>c.classList.remove('selected')); b.classList.add('selected'); r3Answer.reason=opt; };
+        reasonArea.appendChild(b);
+      });
+      document.getElementById('cs-r3-submit').onclick = ()=>{
+        const algoOk = r3Answer.algo === R3_CORRECT;
+        const reasonOk = r3Answer.reason === R3_CORRECT_REASON;
+        if (algoOk) score++;
+        if (reasonOk) score++;
+        updateScoreHud();
+        flashScreen(algoOk && reasonOk ? 'correct' : 'wrong');
+        [...algoArea.children].forEach(b=>{
+          if (b.textContent === R3_CORRECT) b.classList.add('correct');
+          else if (b.classList.contains('selected')) b.classList.add('wrong');
+        });
+        [...reasonArea.children].forEach(b=>{
+          if (b.textContent === R3_CORRECT_REASON) b.classList.add('correct');
+          else if (b.classList.contains('selected')) b.classList.add('wrong');
+        });
+        document.getElementById('cs-r3-submit').disabled = true;
+        document.getElementById('cs-r3-reveal').innerHTML = `
+          <p class="cs-sub" style="margin-top:12px;color:var(--teal);">
+            💡 K-Means scales well and is fast — perfect when you already know the target number of groups, like a fixed marketing segmentation plan.
+          </p>`;
+        setTimeout(showRound3B, 1400);
+      };
+    }
+
+    function showRound3B(){
+      const area = document.getElementById('cs-round-area');
+      area.innerHTML = `
+        <div class="cs-card">
+          <div class="cs-round-label">🧠 Round 3 · Judgment call <span class="cs-difficulty hard">Hard</span></div>
+          <div class="cs-glow-title" style="font-size:18px;">Scenario B — pick the right algorithm, and why</div>
+          <div style="background:rgba(124,58,237,.08);border:1px solid var(--line);border-left:3px solid var(--violet-glow);
+            border-radius:8px;padding:14px 16px;margin:14px 0;">
+            <p class="cs-sub" style="color:var(--ink);font-size:14px;margin:0;">📋 "${R3B_SCENARIO}"</p>
+          </div>
+          <div class="cs-choice-row" id="cs-r3b-algo"></div>
+          <p class="cs-sub" style="margin-top:12px;">Why?</p>
+          <div class="cs-choice-row" id="cs-r3b-reason"></div>
+          <div style="margin-top:10px;"><button class="cs-btn" id="cs-r3b-submit">FINISH SPRINT</button></div>
+          <div id="cs-r3b-reveal"></div>
+        </div>
+      `;
+      const algoArea = document.getElementById('cs-r3b-algo');
+      R3_OPTIONS.forEach(opt=>{
+        const b=document.createElement('button');
+        b.className='cs-btn choice'; b.textContent=opt;
+        b.onclick=()=>{ [...algoArea.children].forEach(c=>c.classList.remove('selected')); b.classList.add('selected'); r3Answer.algo2=opt; };
+        algoArea.appendChild(b);
+      });
+      const reasonArea = document.getElementById('cs-r3b-reason');
+      R3B_REASONS.forEach(opt=>{
+        const b=document.createElement('button');
+        b.className='cs-btn choice'; b.textContent=opt; b.style.fontSize='11px';
+        b.onclick=()=>{ [...reasonArea.children].forEach(c=>c.classList.remove('selected')); b.classList.add('selected'); r3Answer.reason2=opt; };
+        reasonArea.appendChild(b);
+      });
+      document.getElementById('cs-r3b-submit').onclick = ()=>{
+        const algoOk = r3Answer.algo2 === R3B_CORRECT;
+        const reasonOk = r3Answer.reason2 === R3B_CORRECT_REASON;
+        if (algoOk) score++;
+        if (reasonOk) score++;
+        updateScoreHud();
+        flashScreen(algoOk && reasonOk ? 'correct' : 'wrong');
+        [...algoArea.children].forEach(b=>{
+          if (b.textContent === R3B_CORRECT) b.classList.add('correct');
+          else if (b.classList.contains('selected')) b.classList.add('wrong');
+        });
+        [...reasonArea.children].forEach(b=>{
+          if (b.textContent === R3B_CORRECT_REASON) b.classList.add('correct');
+          else if (b.classList.contains('selected')) b.classList.add('wrong');
+        });
+        document.getElementById('cs-r3b-submit').disabled = true;
+        document.getElementById('cs-r3b-reveal').innerHTML = `
+          <p class="cs-sub" style="margin-top:12px;color:var(--teal);">
+            💡 Hierarchical shines exactly when K is unknown — you build the full dendrogram once, then decide where to cut after seeing the structure.
+          </p>`;
+        const round3FullyCorrect = algoOk && reasonOk &&
+          r3Answer.algo === R3_CORRECT && r3Answer.reason === R3_CORRECT_REASON;
+        if (round3FullyCorrect) streak++; else streak = 0;
+        setTimeout(()=> maybeShowStreak(finishSprint), 1400);
+      };
+    }
+
+    async function finishSprint(){
+      if (timerHandle) clearInterval(timerHandle);
+      document.getElementById('cs-round-area').innerHTML = '';
+      const elapsed = Math.round((Date.now()-startTs)/1000);
+      const resultBox = document.getElementById('cs-result');
+      let tier, tierColor;
+      const pct = score/maxScore;
+      if (pct>=0.85){ tier='🏆 CLUSTER MASTER'; tierColor='var(--amber)'; }
+      else if (pct>=0.6){ tier='⭐ SOLID GROUPING'; tierColor='var(--teal)'; }
+      else { tier='🔧 KEEP PRACTICING'; tierColor='var(--violet-glow)'; }
+      resultBox.innerHTML = `
+        <div class="cs-card" style="text-align:center;box-shadow:0 0 40px rgba(124,58,237,.2);">
+          <div class="cs-glow-title" style="font-size:22px;">SPRINT COMPLETE 🏁</div>
+          <div style="font-size:16px;font-weight:700;color:${tierColor};margin:10px 0;">${tier}</div>
+          <p class="cs-sub">Score: <b style="color:var(--amber)">${score}</b> / ${maxScore}
+          &nbsp;·&nbsp; Time: <b style="color:var(--amber)">${elapsed}s</b></p>
+          <p class="cs-sub" id="cs-submit-status">Submitting your score...</p>
+        </div>
+      `;
+      try{
+        await submitScore({ name:playerName, score:score, maxScore:maxScore, elapsed:elapsed, ts:Date.now() });
+        document.getElementById('cs-submit-status').textContent = 'Submitted — check the projector!';
+      }catch(e){
+        document.getElementById('cs-submit-status').textContent = 'Could not submit (check connection / Firebase URL).';
+      }
+    }
+  }
+
+  function escapeHtml(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  async function renderHostView(){
+    stageLabel.textContent = 'LIVE LEADERBOARD';
+    root.innerHTML = `
+      <div class="cs-flex-between" style="margin-bottom:14px;">
+        <div class="cs-glow-title" style="font-size:22px;">CLUSTER SPRINT — LEADERBOARD</div>
+        <span class="cs-mode-toggle" id="cs-back">Back to player view</span>
+      </div>
+      <div class="cs-card">
+        <table class="cs-lb">
+          <thead><tr><th>#</th><th>Name</th><th>Score</th><th>Time</th></tr></thead>
+          <tbody id="cs-lb-body"><tr><td colspan="4" class="cs-sub">Waiting for scores...</td></tr></tbody>
+        </table>
+      </div>
+    `;
+    document.getElementById('cs-back').onclick = ()=>{ window.location.hash=''; render(); };
+    async function refresh(){
+      try{
+        const entries = await fetchScores();
+        if (!entries.length) return;
+        entries.sort((a,b)=> b.score - a.score || a.elapsed - b.elapsed);
+        document.getElementById('cs-lb-body').innerHTML = entries.map((e,i)=>`
+          <tr><td><span class="rank-badge">${i+1}</span></td><td>${escapeHtml(e.name)}</td>
+          <td style="color:var(--teal);font-weight:700;">${e.score}/${e.maxScore||14}</td>
+          <td style="font-family:monospace;">${e.elapsed}s</td></tr>`).join('');
+      }catch(e){}
+    }
+    refresh(); setInterval(refresh, 2500);
+  }
+
+  render();
+})();
+</script>
