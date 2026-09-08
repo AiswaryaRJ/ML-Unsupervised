@@ -405,23 +405,39 @@
         };
         pairArea.appendChild(b);
       });
-      document.getElementById('cs-r1-submit').onclick = ()=>{
-        r1Answer.dist = parseFloat(document.getElementById('cs-r1-dist').value);
-        const pairOk = r1Answer.pair && r1Answer.pair[0]===R1_CORRECT_PAIR[0] && r1Answer.pair[1]===R1_CORRECT_PAIR[1];
-        const distOk = !isNaN(r1Answer.dist) && Math.abs(r1Answer.dist - R1_CORRECT_DIST) <= 0.2;
-        if (pairOk) score++; if (distOk) score++;
-        updateScoreHud();
-        flashScreen(pairOk && distOk ? 'correct' : 'wrong');
-        [...pairArea.children].forEach(b=>{
-          const isCorrectBtn = b.textContent === R1_CORRECT_PAIR.join('-');
-          if (isCorrectBtn) b.classList.add('correct');
-          else if (b.classList.contains('selected')) b.classList.add('wrong');
-        });
-        const distInput = document.getElementById('cs-r1-dist');
-        distInput.style.borderColor = distOk ? 'var(--teal)' : 'var(--coral)';
-        document.getElementById('cs-r1-submit').disabled = true;
-        setTimeout(showRound1Step2, 900);
-      };
+    function warn(afterElId, msg){
+      let el = document.getElementById(afterElId + '-warn');
+      if (!el){
+        el = document.createElement('p');
+        el.id = afterElId + '-warn';
+        el.style.cssText = 'color:var(--coral);font-size:12px;margin-top:8px;';
+        document.getElementById(afterElId).insertAdjacentElement('afterend', el);
+      }
+      el.textContent = msg;
+    }
+
+    document.getElementById('cs-r1-submit').onclick = ()=>{
+      const distRaw = document.getElementById('cs-r1-dist').value.trim();
+      if (!r1Answer.pair || distRaw === ''){
+        warn('cs-r1-submit', '⚠ Pick a pair and type a distance before submitting.');
+        return;
+      }
+      r1Answer.dist = parseFloat(distRaw);
+      const pairOk = r1Answer.pair && r1Answer.pair[0]===R1_CORRECT_PAIR[0] && r1Answer.pair[1]===R1_CORRECT_PAIR[1];
+      const distOk = !isNaN(r1Answer.dist) && Math.abs(r1Answer.dist - R1_CORRECT_DIST) <= 0.2;
+      if (pairOk) score++; if (distOk) score++;
+      updateScoreHud();
+      flashScreen(pairOk && distOk ? 'correct' : 'wrong');
+      [...pairArea.children].forEach(b=>{
+        const isCorrectBtn = b.textContent === R1_CORRECT_PAIR.join('-');
+        if (isCorrectBtn) b.classList.add('correct');
+        else if (b.classList.contains('selected')) b.classList.add('wrong');
+      });
+      const distInput = document.getElementById('cs-r1-dist');
+      distInput.style.borderColor = distOk ? 'var(--teal)' : 'var(--coral)';
+      document.getElementById('cs-r1-submit').disabled = true;
+      setTimeout(showRound1Step2, 900);
+    };
     }
 
     function showRound1Step2(){
@@ -462,7 +478,12 @@
         pairArea.appendChild(b);
       });
       document.getElementById('cs-r1b-submit').onclick = ()=>{
-        r1Answer.dist2 = parseFloat(document.getElementById('cs-r1b-dist').value);
+        const distRaw = document.getElementById('cs-r1b-dist').value.trim();
+        if (!r1Answer.pair2 || distRaw === ''){
+          warn('cs-r1b-submit', '⚠ Pick a pair and type a distance before submitting.');
+          return;
+        }
+        r1Answer.dist2 = parseFloat(distRaw);
         const pairOk = r1Answer.pair2 && r1Answer.pair2[0]===R1B_CORRECT_PAIR[0] && r1Answer.pair2[1]===R1B_CORRECT_PAIR[1];
         const distOk = !isNaN(r1Answer.dist2) && Math.abs(r1Answer.dist2 - R1B_CORRECT_DIST) <= 0.2;
         if (pairOk) score++; if (distOk) score++;
@@ -546,6 +567,11 @@
         list.appendChild(row);
       });
       document.getElementById('cs-r2-submit').onclick = ()=>{
+        const allAnswered = allPointsForPlot.every(p => r2Answers[p.l]);
+        if (!allAnswered){
+          warn('cs-r2-submit', '⚠ Assign every point to a center before submitting.');
+          return;
+        }
         let roundOk = true;
         R2_POINTS.forEach(p=>{
           if (r2Answers[p.l] === R2_CORRECT[p.l]) score++;
@@ -649,6 +675,10 @@
         reasonArea.appendChild(b);
       });
       document.getElementById('cs-r3-submit').onclick = ()=>{
+        if (!r3Answer.algo || !r3Answer.reason){
+          warn('cs-r3-submit', '⚠ Pick an algorithm and a reason before submitting.');
+          return;
+        }
         const algoOk = r3Answer.algo === R3_CORRECT;
         const reasonOk = r3Answer.reason === R3_CORRECT_REASON;
         if (algoOk) score++;
@@ -704,6 +734,10 @@
         reasonArea.appendChild(b);
       });
       document.getElementById('cs-r3b-submit').onclick = ()=>{
+        if (!r3Answer.algo2 || !r3Answer.reason2){
+          warn('cs-r3b-submit', '⚠ Pick an algorithm and a reason before submitting.');
+          return;
+        }
         const algoOk = r3Answer.algo2 === R3B_CORRECT;
         const reasonOk = r3Answer.reason2 === R3B_CORRECT_REASON;
         if (algoOk) score++;
@@ -781,9 +815,10 @@
         if (!entries.length) return;
         entries.sort((a,b)=> b.score - a.score || a.elapsed - b.elapsed);
         document.getElementById('cs-lb-body').innerHTML = entries.map((e,i)=>`
-          <tr><td><span class="rank-badge">${i+1}</span></td><td>${escapeHtml(e.name)}</td>
+          <tr><td><span class="rank-badge">${i+1}</span></td>
+          <td style="color:${i===0?'var(--amber)':'var(--ink)'};font-weight:${i===0?'800':'400'};">${escapeHtml(e.name || '(no name)')}</td>
           <td style="color:var(--teal);font-weight:700;">${e.score}/${e.maxScore||14}</td>
-          <td style="font-family:monospace;">${e.elapsed}s</td></tr>`).join('');
+          <td style="font-family:monospace;color:var(--ink);">${e.elapsed}s</td></tr>`).join('');
       }catch(e){}
     }
     refresh(); setInterval(refresh, 2500);
