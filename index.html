@@ -784,7 +784,13 @@
         </div>
       `;
       try{
-        await submitScore({ name:playerName, score:score, maxScore:maxScore, elapsed:elapsed, ts:Date.now() });
+        await submitScore({
+          name: playerName && playerName.trim() ? playerName : "Anonymous",
+          score: score,
+          maxScore: maxScore,
+          elapsed: elapsed,
+          ts: Date.now()
+        });
         document.getElementById('cs-submit-status').textContent = 'Submitted — check the projector!';
       }catch(e){
         document.getElementById('cs-submit-status').textContent = 'Could not submit (check connection / Firebase URL).';
@@ -816,7 +822,9 @@
         entries.sort((a,b)=> b.score - a.score || a.elapsed - b.elapsed);
         document.getElementById('cs-lb-body').innerHTML = entries.map((e,i)=>`
           <tr><td><span class="rank-badge">${i+1}</span></td>
-          <td style="color:${i===0?'var(--amber)':'var(--ink)'};font-weight:${i===0?'800':'400'};">${escapeHtml(e.name || '(no name)')}</td>
+          <td style="color:${i===0?'var(--amber)':'var(--ink)'};font-weight:${i===0?'800':'400'};">
+            ${e.name ? escapeHtml(e.name) : 'Anonymous'}
+          </td>
           <td style="color:var(--teal);font-weight:700;">${e.score}/${e.maxScore||14}</td>
           <td style="font-family:monospace;color:var(--ink);">${e.elapsed}s</td></tr>`).join('');
       }catch(e){}
